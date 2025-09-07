@@ -1,38 +1,67 @@
 import { useEffect, useMemo, useState } from "react";
-import { categories, salarySteps, JOBS } from "./jobs";
+import { categories, salarySteps } from "./jobs";   // ← JOBSは削除
+import { listJobs } from "./api/job";               // ← Rails APIから取得
 import type { Category } from "./job";
 
 /* ========= 求人検索ページ ========= */
 export function SearchPage() {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
-  const [minSalary, setMinSalary] = useState<number>(300);// 万円
+  const [minSalary, setMinSalary] = useState<number>(300); // 万円
 
   const toggleCategory = (c: Category) =>
     setSelectedCategories((prev) =>
       prev.includes(c) 
-    ? prev.filter((x) => x !== c) //すでに選択されていたら外す
-    : [...prev, c] //選択されていなければ追加
+        ? prev.filter((x) => x !== c) //すでに選択されていたら外す
+        : [...prev, c]                //選択されていなければ追加
     );
 
   const pageSize = 10;
   const [page, setPage] = useState(1); //現在のページ番号
 
+  /* ========= Rails APIから求人一覧を取得 ========= */
+  const [apiJobs, setApiJobs] = useState<
+    { id: number; title: string; category: Category; salary: number }[]
+  >([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await listJobs();
+        // APIのレスポンスを画面用に整形
+        const mapped = data.map((j) => ({
+          id: j.id,
+          title: j.title,
+          category: (j.category ?? "事務") as Category, // null時はデフォルトカテゴリを当てる
+          salary: j.salary ?? 0,                        // null時は0で扱う
+        }));
+        setApiJobs(mapped);
+      } catch (e) {
+        console.error("求人の取得に失敗しました:", e);
+        setApiJobs([]);
+      }
+    })();
+  }, []);
+
+  // ← 画面で使う元データは API のみ
+  const allJobs = apiJobs;
+
   const filtered = useMemo(() => {
     const byCat = selectedCategories.length
-      ? JOBS.filter((j) => selectedCategories.includes(j.category)) //1つでも選択したら絞り込んで表示
-      : JOBS;
+      ? allJobs.filter((j) => selectedCategories.includes(j.category)) //1つでも選択したら絞り込む
+      : allJobs;
     return byCat.filter((j) => j.salary >= minSalary);
-  }, [selectedCategories, minSalary]);
+  }, [selectedCategories, minSalary, allJobs]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize)); //ページ数の計算
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize); //表示する求人を切り出す
 
-    // フィルタ変更時は1ページ目へ戻す
+  // フィルタ変更時は1ページ目へ戻す
   useEffect(() => { setPage(1); }, [selectedCategories, minSalary]);
-    /* ========= サイドバー、求人一覧 =========*/
+
+  /* ========= サイドバー、求人一覧 ========= */
   return (
     <div className="flex w-full">
-        {/* 職種チェックボックス */}
+      {/* 職種チェックボックス */}
       <aside className="w-64 shrink-0 bg-gray-200 p-4 pt-6">
         <div className="mx-auto max-w-6xl">
           <p className="mb-2 text-sm font-semibold text-slate-700">求人カテゴリ</p>
@@ -77,7 +106,7 @@ export function SearchPage() {
         </div>
 
         <section className="grid gap-4">
-        {/*絞り込み、ページ分割が完了している配列を表示*/}
+          {/*絞り込み、ページ分割が完了している配列を表示*/}
           {paged.map((job) => (
             <article key={job.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h3 className="text-base md:text-lg font-semibold leading-snug">{job.title}</h3>
