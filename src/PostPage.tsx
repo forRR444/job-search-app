@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createJob } from "./api/job";            // ← パスOK（単数）
+import { createJob } from "./api/job";
 import { useNavigate } from "react-router-dom";
 import { categories } from "./jobs";
 import type { Category } from "./job";
@@ -11,25 +11,37 @@ export function PostPage() {
   const [salary, setSalary] = useState<string>("");   // 入力は文字列で保持
   const [title, setTitle] = useState("");
 
-  // ★ ここが肝：FormDataをやめ、stateからpayloadを作る
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault(); //フォーム送信を止める
 
+    //最小のタイトルバリデーション
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) {            // 最小バリデーション
+    if (!trimmedTitle) {
       alert("タイトルは必須です");
       return;
     }
 
-    const salaryNum =
-      salary.trim() === "" ? undefined : Number(salary); // "" は undefined、数値に変換
-    // NaNガード（数字以外を弾く）
-    const salaryVal = Number.isNaN(salaryNum as number) ? undefined : salaryNum;
+  //カテゴリバリデーション
+  if (!category) {
+    alert("カテゴリは必須です");
+    return;
+}
 
+    //給与を文字列から数値へ変換
+    const salaryNum =salary.trim() === "" 
+      ? undefined 
+      : Number(salary); 
+
+    // 数字以外を弾く
+    const salaryVal = Number.isNaN(salaryNum as number) 
+      ? undefined 
+      : salaryNum;
+
+    //サーバーに送るデータを作成
     const payload = {
       title: trimmedTitle,
-      category: category || undefined,  // 未選択なら送らない
-      salary: salaryVal,                // undefined or number
+      category,
+      salary: salaryVal,               
     };
 
     try {
@@ -61,9 +73,12 @@ export function PostPage() {
           <select
             className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300"
             value={category}
-            onChange={(e) => setCategory(e.target.value as Category | "")}
+            onChange={(e) => setCategory(e.target.value as Category)}
+            required   // ブラウザ側でも必須に
           >
-            <option value="">未選択</option>
+            <option value="" disabled hidden>
+              カテゴリを選択してください
+            </option>
             {categories.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -75,9 +90,10 @@ export function PostPage() {
           <input
             type="number"
             inputMode="numeric"
-            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300 placeholder-slate-400" 
             value={salary}
             onChange={(e) => setSalary(e.target.value)}
+            required   // ブラウザ側でも必須に
             placeholder="例: 200"
           />
         </label>
@@ -85,7 +101,7 @@ export function PostPage() {
         <label className="mt-6 block">
           <span className="text-sm font-semibold text-slate-800">求人タイトル</span>
           <input
-            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300 placeholder-slate-400"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required   // ブラウザ側でも必須に

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { categories, salarySteps } from "./jobs";   // ← JOBSは削除
-import { listJobs } from "./api/job";               // ← Rails APIから取得
+import { categories, salarySteps } from "./jobs";
+import { listJobs } from "./api/job";  //Rails APIから取得
 import type { Category } from "./job";
 
 /* ========= 求人検索ページ ========= */
@@ -31,8 +31,8 @@ export function SearchPage() {
         const mapped = data.map((j) => ({
           id: j.id,
           title: j.title,
-          category: (j.category ?? "事務") as Category, // null時はデフォルトカテゴリを当てる
-          salary: j.salary ?? 0,                        // null時は0で扱う
+          category: (j.category) as Category,
+          salary: j.salary
         }));
         setApiJobs(mapped);
       } catch (e) {
@@ -42,7 +42,6 @@ export function SearchPage() {
     })();
   }, []);
 
-  // ← 画面で使う元データは API のみ
   const allJobs = apiJobs;
 
   const filtered = useMemo(() => {
