@@ -34,14 +34,15 @@ export async function listJobs(): Promise<Job[]> {
 // ====================
 export async function createJob(payload: {
   title: string;
-  description: string; // 追加
+  description: string; // 👈 追加
   category: string;
   salary: number;
 }): Promise<Job> {
   const res = await fetch(`/api/v1/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ job: payload }), // Rails の Strong Params に合わせて { job: {...} }
+    // Rails の Strong Parameters に合わせて { job: {...} } で送信
+    body: JSON.stringify({ job: payload }),
   });
 
   if (res.status === 422) {
