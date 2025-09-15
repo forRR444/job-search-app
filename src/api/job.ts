@@ -22,7 +22,7 @@ export type ValidationError = {
 // Job 一覧取得
 // ====================
 export async function listJobs(): Promise<Job[]> {
-  const res = await fetch(`/api/v1/jobs`);
+  const res = await fetch("/api/v1/jobs");
   if (!res.ok) {
     throw new Error(`GET /jobs failed: ${res.status}`);
   }
@@ -38,7 +38,7 @@ export async function createJob(payload: {
   category: string;
   salary: number;
 }): Promise<Job> {
-  const res = await fetch(`/api/v1/jobs`, {
+  const res = await fetch("/api/v1/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // Rails の Strong Parameters に合わせて { job: {...} } で送信
