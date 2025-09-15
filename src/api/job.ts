@@ -21,27 +21,21 @@ export async function listJobs(): Promise<Job[]> {
 }
 
 // Job作成（相対パス + バリデーション維持）
+// src/api/job.ts
 export async function createJob(payload: {
   title: string;
   category: string;
   salary: number;
-}): Promise<Job | ValidationError> {
+}) {
   const res = await fetch(`/api/v1/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // Rails の Strong Parameters に合わせて { job: {...} } で送る
     body: JSON.stringify({ job: payload }),
   });
-
   if (res.status === 422) {
     const body = await res.json();
-    // 422 はバリデーションエラーとして呼び出し側で分岐できるよう返す
-    return { type: "validation", errors: body.errors ?? [] };
+    throw { type: "validation", errors: body.errors };
   }
-
-  if (!res.ok) {
-    throw new Error(`POST /jobs failed: ${res.status}`);
-  }
-
+  if (!res.ok) throw new Error(`POST /jobs failed: ${res.status}`);
   return res.json();
 }
