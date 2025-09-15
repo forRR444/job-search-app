@@ -1,6 +1,3 @@
-// src/api/jobs.ts
-const BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
-
 //型定義
 export type Job = {
   id: number;
@@ -11,30 +8,40 @@ export type Job = {
   updated_at: string;
 };
 
-//Job一覧取得
+export type ValidationError = {
+  type: "validation";
+  errors: string[]; // Rails 側で { errors: [...] } を返す前提
+};
+
+// Job一覧取得（相対パスに統一）
 export async function listJobs(): Promise<Job[]> {
-  const res = await fetch(`${BASE}/api/v1/jobs`);
+  const res = await fetch(`/api/v1/jobs`);
   if (!res.ok) throw new Error(`GET /jobs failed: ${res.status}`);
   return res.json();
 }
 
-//Job作成
-export async function createJob(payload: { title: string; category: string; salary: number }) {
-  const res = await fetch(`${BASE}/api/v1/jobs`, {
+// Job作成（相対パス + バリデーション維持）
+export async function createJob(payload: {
+  title: string;
+  category: string;
+  salary: number;
+}): Promise<Job | ValidationError> {
+  const res = await fetch(`/api/v1/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // RailsのStrong Parametersに合わせて { job: {...} } で送る
+    // Rails の Strong Parameters に合わせて { job: {...} } で送る
     body: JSON.stringify({ job: payload }),
   });
+
   if (res.status === 422) {
-    //バリデーションエラー
     const body = await res.json();
-    throw { type: "validation", errors: body.errors };
+    // 422 はバリデーションエラーとして呼び出し側で分岐できるよう返す
+    return { type: "validation", errors: body.errors ?? [] };
   }
+
   if (!res.ok) {
-    //その他のエラー
     throw new Error(`POST /jobs failed: ${res.status}`);
   }
-  //成功
+
   return res.json();
 }
