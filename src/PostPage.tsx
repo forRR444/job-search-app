@@ -4,54 +4,48 @@ import { useNavigate } from "react-router-dom";
 import { categories } from "./jobs";
 import type { Category } from "./job";
 
-/* ========= 求人投稿ページ ========= */
 export function PostPage() {
   const nav = useNavigate();
   const [category, setCategory] = useState<"" | Category>("");
-  const [salary, setSalary] = useState<string>("");   // 入力は文字列で保持
+  const [salary, setSalary] = useState<string>("");
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState(""); // 👈 description追加
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); //フォーム送信を止める
+    e.preventDefault();
 
-    //最小のタイトルバリデーション
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
       alert("タイトルは必須です");
       return;
     }
+    if (!category) {
+      alert("カテゴリは必須です");
+      return;
+    }
+    if (!description.trim()) {
+      alert("仕事内容は必須です");
+      return;
+    }
 
-  //カテゴリバリデーション
-  if (!category) {
-    alert("カテゴリは必須です");
-    return;
-}
+    const salaryNum = salary.trim() === "" ? undefined : Number(salary);
+    const salaryVal = Number.isNaN(salaryNum as number) ? undefined : salaryNum;
 
-    //給与を文字列から数値へ変換
-    const salaryNum =salary.trim() === "" 
-      ? undefined 
-      : Number(salary); 
-
-    // 数字以外を弾く
-    const salaryVal = Number.isNaN(salaryNum as number) 
-      ? undefined 
-      : salaryNum;
-
-    //サーバーに送るデータを作成
     const payload = {
       title: trimmedTitle,
+      description, // 👈 descriptionを送る
       category,
-      salary: salaryVal,               
+      salary: salaryVal,
     };
 
     try {
-      await createJob(payload);   // ← RailsにPOST
-      // フォーム初期化
+      await createJob(payload);
       setCategory("");
       setSalary("");
       setTitle("");
+      setDescription(""); // 👈 初期化
       alert("求人を作成しました");
-      nav("/");                   // 一覧へ
+      nav("/");
     } catch (err: any) {
       if (err?.type === "validation") {
         alert("入力エラー: " + JSON.stringify(err.errors));
@@ -66,53 +60,74 @@ export function PostPage() {
     <div className="mx-auto max-w-5xl px-4 md:px-6 py-8">
       <h2 className="text-2xl font-bold text-slate-900">求人投稿</h2>
 
-      {/* 入力とボタンを同じ form に入れる */}
       <form onSubmit={onSubmit} className="mt-6 max-w-2xl">
+        {/* カテゴリ */}
         <label className="block max-w-md">
-          <span className="text-sm font-semibold text-slate-800">求人カテゴリ選択</span>
+          <span className="text-sm font-semibold text-slate-800">
+            求人カテゴリ選択
+          </span>
           <select
-            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px]"
             value={category}
             onChange={(e) => setCategory(e.target.value as Category)}
-            required   // ブラウザ側でも必須に
+            required
           >
             <option value="" disabled hidden>
               カテゴリを選択してください
             </option>
             {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </label>
 
+        {/* 年収 */}
         <label className="mt-6 block max-w-md">
-          <span className="text-sm font-semibold text-slate-800">年収（万円）</span>
+          <span className="text-sm font-semibold text-slate-800">
+            年収（万円）
+          </span>
           <input
             type="number"
-            inputMode="numeric"
-            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300 placeholder-slate-400" 
             value={salary}
             onChange={(e) => setSalary(e.target.value)}
-            required   // ブラウザ側でも必須に
+            required
             placeholder="例: 200"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11"
           />
         </label>
 
+        {/* タイトル */}
         <label className="mt-6 block">
-          <span className="text-sm font-semibold text-slate-800">求人タイトル</span>
+          <span className="text-sm font-semibold text-slate-800">
+            求人タイトル
+          </span>
           <input
-            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11 text-[15px] rounded-none focus:outline-none focus:ring-2 focus:ring-sky-300 placeholder-slate-400"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            required   // ブラウザ側でも必須に
-            placeholder="例: フロントエンドエンジニア（デザイン経験歓迎）"
+            required
+            placeholder="例: フロントエンドエンジニア"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-11"
+          />
+        </label>
+
+        {/* 仕事内容 (description) 👈 追加 */}
+        <label className="mt-6 block">
+          <span className="text-sm font-semibold text-slate-800">仕事内容</span>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            placeholder="例: React/TypeScript を用いたフロントエンド開発業務"
+            className="mt-2 block w-full border border-slate-300 bg-white px-4 h-24"
           />
         </label>
 
         <div className="mt-8">
           <button
             type="submit"
-            className="inline-block bg-sky-600 hover:bg-sky-700 text-white px-12 py-3 rounded-md shadow-sm"
+            className="inline-block bg-sky-600 hover:bg-sky-700 text-white px-12 py-3 rounded-md"
           >
             投稿
           </button>

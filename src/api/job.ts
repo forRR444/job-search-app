@@ -6,6 +6,7 @@
 export type Job = {
   id: number;
   title: string;
+  description: string; // 追加
   category: string;
   salary: number;
   created_at: string;
@@ -14,14 +15,14 @@ export type Job = {
 
 export type ValidationError = {
   type: "validation";
-  errors: string[]; // Rails 側で { errors: [...] } を返す前提
+  errors: string[];
 };
 
 // ====================
 // Job 一覧取得
 // ====================
 export async function listJobs(): Promise<Job[]> {
-  const res = await fetch(`/api/v1/jobs`); // 相対パス
+  const res = await fetch(`/api/v1/jobs`);
   if (!res.ok) {
     throw new Error(`GET /jobs failed: ${res.status}`);
   }
@@ -33,14 +34,14 @@ export async function listJobs(): Promise<Job[]> {
 // ====================
 export async function createJob(payload: {
   title: string;
+  description: string; // 追加
   category: string;
   salary: number;
 }): Promise<Job> {
   const res = await fetch(`/api/v1/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // Rails の Strong Parameters に合わせて { job: {...} } で送信
-    body: JSON.stringify({ job: payload }),
+    body: JSON.stringify({ job: payload }), // Rails の Strong Params に合わせて { job: {...} }
   });
 
   if (res.status === 422) {
