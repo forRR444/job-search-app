@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "start": "serve -s dist -l $PORT",      
-    "heroku-postbuild": "npm run build"  
+    "lint": "eslint ."
   },
   "dependencies": {
     "react": "^19.1.1",
